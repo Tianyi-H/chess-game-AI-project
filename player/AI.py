@@ -251,7 +251,7 @@ class AI:
 
     def calculateb(self, gametiles):
         value = 0
-        # Adding positional values to pieces to encourage control of the center and development
+
         pawn_positional_values = [
             [0, 0, 0, 0, 0, 0, 0, 0],
             [5, 10, 10, -20, -20, 10, 10, 5],
@@ -334,13 +334,11 @@ class AI:
                 piece = gametiles[y][x].pieceonTile
                 piece_type = piece.tostring().lower()
                 is_white = piece.tostring().islower()
-                modifier = 1 if is_white else -1  # Positive for white, negative for black
+                modifier = 1 if is_white else -1
 
-                # Pawn positional value
                 if piece_type == 'p':
                     value += 100 * modifier + pawn_positional_values[y][x] * modifier
 
-                # Knight positional value
                 elif piece_type == 'n':
                     value += 320 * modifier + knight_positional_values[y][x] * modifier
 
@@ -358,17 +356,6 @@ class AI:
 
                 elif piece_type == 'k':
                     value += 20000 * modifier + king_positional_values_endgame[y][x] * modifier
-                # For bishops, rooks, queens, and kings, add the base value plus the positional value
-                # For example:
-                # elif piece_type == 'b':
-                #     value += 330 * modifier + bishop_positional_values[y][x] * modifier
-                # ...
-
-                # Adjust the base values as needed based on your game experience and testing
-                # ...
-
-        # You can add further heuristics like doubled pawns, isolated pawns, backward pawns,
-        # control of the center (d4, d5, e4, e5 squares), king safety, etc.
 
         return value
 
