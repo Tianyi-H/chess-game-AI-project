@@ -251,46 +251,126 @@ class AI:
 
     def calculateb(self, gametiles):
         value = 0
+        # Adding positional values to pieces to encourage control of the center and development
+        pawn_positional_values = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [5, 10, 10, -20, -20, 10, 10, 5],
+            [5, -5, -10, 0, 0, -10, -5, 5],
+            [0, 0, 0, 20, 20, 0, 0, 0],
+            [5, 5, 10, 25, 25, 10, 5, 5],
+            [10, 10, 20, 30, 30, 20, 10, 10],
+            [50, 50, 50, 50, 50, 50, 50, 50],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+
+        knight_positional_values = [
+            [-50, -40, -30, -30, -30, -30, -40, -50],
+            [-40, -20, 0, 0, 0, 0, -20, -40],
+            [-30, 0, 10, 15, 15, 10, 0, -30],
+            [-30, 5, 15, 20, 20, 15, 5, -30],
+            [-30, 0, 15, 20, 20, 15, 0, -30],
+            [-30, 5, 10, 15, 15, 10, 5, -30],
+            [-40, -20, 0, 5, 5, 0, -20, -40],
+            [-50, -40, -30, -30, -30, -30, -40, -50]
+        ]
+
+        bishop_positional_values = [
+            [-20, -10, -10, -10, -10, -10, -10, -20],
+            [-10, 5, 0, 0, 0, 0, 5, -10],
+            [-10, 10, 10, 10, 10, 10, 10, -10],
+            [-10, 0, 10, 10, 10, 10, 0, -10],
+            [-10, 5, 5, 10, 10, 5, 5, -10],
+            [-10, 0, 5, 10, 10, 5, 0, -10],
+            [-10, 0, 0, 0, 0, 0, 0, -10],
+            [-20, -10, -10, -10, -10, -10, -10, -20]
+        ]
+
+        rook_positional_values = [
+            [0, 0, 0, 5, 5, 0, 0, 0],
+            [-5, 0, 0, 0, 0, 0, 0, -5],
+            [-5, 0, 0, 0, 0, 0, 0, -5],
+            [-5, 0, 0, 0, 0, 0, 0, -5],
+            [-5, 0, 0, 0, 0, 0, 0, -5],
+            [-5, 0, 0, 0, 0, 0, 0, -5],
+            [5, 10, 10, 10, 10, 10, 10, 5],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+
+        queen_positional_values = [
+            [-20, -10, -10, -5, -5, -10, -10, -20],
+            [-10, 0, 0, 0, 0, 5, 0, -10],
+            [-10, 0, 5, 5, 5, 5, 0, -10],
+            [-5, 0, 5, 5, 5, 5, 0, -5],
+            [0, 0, 5, 5, 5, 5, 0, -5],
+            [-10, 5, 5, 5, 5, 5, 0, -10],
+            [-10, 0, 5, 0, 0, 0, 0, -10],
+            [-20, -10, -10, -5, -5, -10, -10, -20]
+        ]
+
+        king_positional_values_early = [
+            [20, 30, 10, 0, 0, 10, 30, 20],
+            [20, 20, 0, 0, 0, 0, 20, 20],
+            [-10, -20, -20, -20, -20, -20, -20, -10],
+            [-20, -30, -30, -40, -40, -30, -30, -20],
+            [-30, -40, -40, -50, -50, -40, -40, -30],
+            [-30, -40, -40, -50, -50, -40, -40, -30],
+            [-30, -40, -40, -50, -50, -40, -40, -30],
+            [-30, -40, -40, -50, -50, -40, -40, -30]
+        ]
+
+        king_positional_values_endgame = [
+            [-50, -40, -30, -20, -20, -30, -40, -50],
+            [-30, -20, -10, 0, 0, -10, -20, -30],
+            [-30, -10, 20, 30, 30, 20, -10, -30],
+            [-30, -10, 30, 40, 40, 30, -10, -30],
+            [-30, -10, 30, 40, 40, 30, -10, -30],
+            [-30, -10, 20, 30, 30, 20, -10, -30],
+            [-30, -30, 0, 0, 0, 0, -30, -30],
+            [-50, -30, -30, -30, -30, -30, -30, -50]
+        ]
+
         for x in range(8):
             for y in range(8):
                 piece = gametiles[y][x].pieceonTile
-                if piece is not None and piece.tostring() != " ":
-                    piece_value = self.get_piece_value(piece)
-                    value += piece_value if piece.color == 'Black' else -piece_value
-                    distance_to_center = max(abs(3.5 - x), abs(3.5 - y))
-                    value -= distance_to_center if piece.color == 'Black' else -distance_to_center
-                    if piece.tostring().lower() in ['b', 'n'] and (
-                            (piece.color == 'Black' and y != 0) or (piece.color == 'White' and y != 7)):
-                        value += 0.5 if piece.color == 'Black' else -0.5
-                    if piece.tostring().upper() == 'K':
-                        file_open = self.is_semi_open_file(gametiles, y)
-                        value -= 1 if piece.color == 'Black' and file_open else -1 if piece.color == 'White' and file_open else 0
-                    if piece.tostring().lower() == 'p':
-                        if self.is_isolated_pawn(gametiles, x, y):
-                            value -= 0.5 if piece.color == 'Black' else -0.5
+                piece_type = piece.tostring().lower()
+                is_white = piece.tostring().islower()
+                modifier = 1 if is_white else -1  # Positive for white, negative for black
+
+                # Pawn positional value
+                if piece_type == 'p':
+                    value += 100 * modifier + pawn_positional_values[y][x] * modifier
+
+                # Knight positional value
+                elif piece_type == 'n':
+                    value += 320 * modifier + knight_positional_values[y][x] * modifier
+
+                elif piece_type == 'b':
+                    value += 330 * modifier + bishop_positional_values[y][x] * modifier
+
+                elif piece_type == 'r':
+                    value += 500 * modifier + rook_positional_values[y][x] * modifier
+
+                elif piece_type == 'q':
+                    value += 900 * modifier + queen_positional_values[y][x] * modifier
+
+                elif piece_type == 'k':
+                    value += 20000 * modifier + king_positional_values_early[y][x] * modifier
+
+                elif piece_type == 'k':
+                    value += 20000 * modifier + king_positional_values_endgame[y][x] * modifier
+                # For bishops, rooks, queens, and kings, add the base value plus the positional value
+                # For example:
+                # elif piece_type == 'b':
+                #     value += 330 * modifier + bishop_positional_values[y][x] * modifier
+                # ...
+
+                # Adjust the base values as needed based on your game experience and testing
+                # ...
+
+        # You can add further heuristics like doubled pawns, isolated pawns, backward pawns,
+        # control of the center (d4, d5, e4, e5 squares), king safety, etc.
 
         return value
-
-    def get_piece_value(self, piece):
-        values = {'P': 1, 'N': 3, 'B': 3.1, 'R': 5, 'Q': 9,
-                  'K': 0}  # King has no value since the game ends if the king is captured
-        return values[piece.tostring().upper()]
-
-    def is_semi_open_file(self, gametiles, file_index):
-        for rank_index in range(8):
-            if gametiles[file_index][rank_index].pieceonTile.tostring().lower() == 'p':
-                return False
-        return True
-
-    def is_isolated_pawn(self, gametiles, x, y):
-        # Pawns on the edges are always isolated
-        if x == 0 or x == 7:
-            return True
-        for adj_x in [x - 1, x + 1]:
-            for adj_y in range(8):
-                if gametiles[adj_y][adj_x].pieceonTile.tostring().lower() == 'p':
-                    return False
-        return True
 
     def move(self,gametiles,y,x,n,m):
         promotion=False
