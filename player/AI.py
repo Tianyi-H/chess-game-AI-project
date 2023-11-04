@@ -249,46 +249,37 @@ class AI:
             arr.append([y,x,move[0],move[1],mk])
         return arr
 
-
-    def calculateb(self,gametiles):
-        value=0
+    def calculateb(self, gametiles):
+        value = 0
         for x in range(8):
             for y in range(8):
-                    if gametiles[y][x].pieceonTile.tostring()=='P':
-                        value=value-100
+                piece = gametiles[y][x].pieceonTile
+                if piece is not None:
+                    # Basic material score
+                    value += piece.value
 
-                    if gametiles[y][x].pieceonTile.tostring()=='N':
-                        value=value-350
+                    # Positional score
+                    if piece.tostring().islower():
+                        value += piece.position_value[y][x]
+                    else:
+                        value -= piece.position_value[y][x]
 
-                    if gametiles[y][x].pieceonTile.tostring()=='B':
-                        value=value-350
+                    # Mobility (number of legal moves)
+                    value += 0.1 * len(self.get_legal_moves(gametiles, piece, x, y))
 
-                    if gametiles[y][x].pieceonTile.tostring()=='R':
-                        value=value-525
+                    # Pawn structure
+                    if piece.tostring().lower() == 'p':
+                        value += self.evaluate_pawn_structure(gametiles, x, y)
 
-                    if gametiles[y][x].pieceonTile.tostring()=='Q':
-                        value=value-1000
+                    # King safety
+                    if piece.tostring().lower() == 'k':
+                        value += self.evaluate_king_safety(gametiles, x, y)
 
-                    if gametiles[y][x].pieceonTile.tostring()=='K':
-                        value=value-10000
-
-                    if gametiles[y][x].pieceonTile.tostring()=='p':
-                        value=value+100
-
-                    if gametiles[y][x].pieceonTile.tostring()=='n':
-                        value=value+350
-
-                    if gametiles[y][x].pieceonTile.tostring()=='b':
-                        value=value+350
-
-                    if gametiles[y][x].pieceonTile.tostring()=='r':
-                        value=value+525
-
-                    if gametiles[y][x].pieceonTile.tostring()=='q':
-                        value=value+1000
-
-                    if gametiles[y][x].pieceonTile.tostring()=='k':
-                        value=value+10000
+                    # Check and Mate threats
+                    if self.is_checkmate(gametiles, piece.color):
+                        value += 10000 if piece.color == 'white' else -10000
+                    elif self.is_check(gametiles, piece.color):
+                        value += 500 if piece.color == 'white' else -500
 
         return value
 
