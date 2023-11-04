@@ -255,25 +255,16 @@ class AI:
             for y in range(8):
                 piece = gametiles[y][x].pieceonTile
                 if piece is not None and piece.tostring() != " ":
-                    # Base material score
                     piece_value = self.get_piece_value(piece)
                     value += piece_value if piece.color == 'Black' else -piece_value
-
-                    # Central control (bonus for being near the center of the board)
                     distance_to_center = max(abs(3.5 - x), abs(3.5 - y))
                     value -= distance_to_center if piece.color == 'Black' else -distance_to_center
-
-                    # Development (minor pieces out of the back rank)
                     if piece.tostring().lower() in ['b', 'n'] and (
                             (piece.color == 'Black' and y != 0) or (piece.color == 'White' and y != 7)):
                         value += 0.5 if piece.color == 'Black' else -0.5
-
-                    # King safety (penalty for the king being on a semi-open file)
                     if piece.tostring().upper() == 'K':
                         file_open = self.is_semi_open_file(gametiles, y)
                         value -= 1 if piece.color == 'Black' and file_open else -1 if piece.color == 'White' and file_open else 0
-
-                    # Pawn structure (penalty for isolated pawns)
                     if piece.tostring().lower() == 'p':
                         if self.is_isolated_pawn(gametiles, x, y):
                             value -= 0.5 if piece.color == 'Black' else -0.5
