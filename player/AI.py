@@ -254,35 +254,52 @@ class AI:
         for x in range(8):
             for y in range(8):
                 piece = gametiles[y][x].pieceonTile
-                if piece is not None:
-                    # Basic material score
-                    value += piece.value
+                if piece is not None and piece.tostring() != " ":
+                    # Base material score
+                    piece_value = self.get_piece_value(piece)
+                    value += piece_value if piece.color == 'Black' else -piece_value
 
-                    # Positional score
-                    if piece.tostring().islower():
-                        value += piece.position_value[y][x]
-                    else:
-                        value -= piece.position_value[y][x]
+                    # Central control (bonus for being near the center of the board)
+                    distance_to_center = max(abs(3.5 - x), abs(3.5 - y))
+                    value -= distance_to_center if piece.color == 'Black' else -distance_to_center
 
-                    # Mobility (number of legal moves)
-                    value += 0.1 * len(self.get_legal_moves(gametiles, piece, x, y))
+                    # Development (minor pieces out of the back rank)
+                    if piece.tostring().lower() in ['b', 'n'] and (
+                            (piece.color == 'Black' and y != 0) or (piece.color == 'White' and y != 7)):
+                        value += 0.5 if piece.color == 'Black' else -0.5
 
-                    # Pawn structure
+                    # King safety (penalty for the king being on a semi-open file)
+                    if piece.tostring().upper() == 'K':
+                        file_open = self.is_semi_open_file(gametiles, y)
+                        value -= 1 if piece.color == 'Black' and file_open else -1 if piece.color == 'White' and file_open else 0
+
+                    # Pawn structure (penalty for isolated pawns)
                     if piece.tostring().lower() == 'p':
-                        value += self.evaluate_pawn_structure(gametiles, x, y)
-
-                    # King safety
-                    if piece.tostring().lower() == 'k':
-                        value += self.evaluate_king_safety(gametiles, x, y)
-
-                    # Check and Mate threats
-                    if self.is_checkmate(gametiles, piece.color):
-                        value += 10000 if piece.color == 'white' else -10000
-                    elif self.is_check(gametiles, piece.color):
-                        value += 500 if piece.color == 'white' else -500
+                        if self.is_isolated_pawn(gametiles, x, y):
+                            value -= 0.5 if piece.color == 'Black' else -0.5
 
         return value
 
+    def get_piece_value(self, piece):
+        values = {'P': 1, 'N': 3, 'B': 3.1, 'R': 5, 'Q': 9,
+                  'K': 0}  # King has no value since the game ends if the king is captured
+        return values[piece.tostring().upper()]
+
+    def is_semi_open_file(self, gametiles, file_index):
+        for rank_index in range(8):
+            if gametiles[file_index][rank_index].pieceonTile.tostring().lower() == 'p':
+                return False
+        return True
+
+    def is_isolated_pawn(self, gametiles, x, y):
+        # Pawns on the edges are always isolated
+        if x == 0 or x == 7:
+            return True
+        for adj_x in [x - 1, x + 1]:
+            for adj_y in range(8):
+                if gametiles[adj_y][adj_x].pieceonTile.tostring().lower() == 'p':
+                    return False
+        return True
 
     def move(self,gametiles,y,x,n,m):
         promotion=False
